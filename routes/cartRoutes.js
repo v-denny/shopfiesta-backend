@@ -42,6 +42,53 @@ router.post('/remove', async (req, res) => {
     }
 });
 
+// Increment quantity
+router.post('/increment', async (req, res) => {
+    const { uid, productId } = req.body;
+    try {
+        const user = await User.findOne({ firebaseId: uid });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const itemIndex = user.cart.findIndex(p => p.productId === productId);
+
+        if (itemIndex > -1) {
+            user.cart[itemIndex].quantity += 1;
+            await user.save();
+            res.status(200).json(user.cart);
+        } else {
+            res.status(404).json({ message: "Item not found in cart" });
+        }
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+// Decrement quantity
+router.post('/decrement', async (req, res) => {
+    const { uid, productId } = req.body;
+    try {
+        const user = await User.findOne({ firebaseId: uid });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const itemIndex = user.cart.findIndex(p => p.productId === productId);
+
+        if (itemIndex > -1) {
+            if (user.cart[itemIndex].quantity > 1) {
+                user.cart[itemIndex].quantity -= 1;
+            } else {
+                // Remove item if quantity becomes 0
+                user.cart.splice(itemIndex, 1);
+            }
+            await user.save();
+            res.status(200).json(user.cart);
+        } else {
+            res.status(404).json({ message: "Item not found in cart" });
+        }
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
 // GET /api/cart/:uid (Fetch cart on login)
 router.get('/:uid', async (req, res) => {
     try {
