@@ -10,6 +10,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const userRoutes = require('./routes/userRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 const app = express();
 
@@ -19,7 +20,7 @@ connectDB();
 // 4. Middleware
 app.use(express.json()); 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://your-vercel-domain.vercel.app'], 
+    origin: ['http://localhost:5173', 'https://shopfiesta.vercel.app'], 
     credentials: true
 }));
 
@@ -28,6 +29,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/products', productRoutes);
 
 // Basic test route
 app.get('/', (req, res) => {
