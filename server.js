@@ -17,7 +17,15 @@ const app = express();
 // 3. Connect to MongoDB
 connectDB();
 
-// 4. Middleware
+// 4. STRIPE WEBHOOK (MUST come before express.json)
+// We use a middleware to capture the raw body specifically for this route
+app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+    // This logic usually lives in your controller, but the middleware is applied here
+    // If you prefer to keep server.js clean, just ensure the route handler in 
+    // paymentRoutes uses express.raw for this specific path.
+});
+
+// Middleware
 app.use(express.json()); 
 app.use(cors({
     origin: ['http://localhost:5173', 'https://shopfiesta.vercel.app'], 

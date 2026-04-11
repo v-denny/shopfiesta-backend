@@ -1,31 +1,49 @@
 const express = require('express');
-const Razorpay = require('razorpay');
 const router = express.Router();
 const User = require('../models/User');
+// Initialize Stripe with your Secret Key from .env
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+router.post('/create-checkout-session', async (req, res) => {
+    const { uid } = req.body; // Firebase UID from frontend
 
-router.post('/create-order', async (req, res) => {
-    const { uid } = req.body;
     try {
+        // 1. Get user and their cart from MongoDB
         const user = await User.findOne({ firebaseId: uid });
         
-        // Calculate total from the cart saved in MongoDB
-        const total = user.cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+        if (!user || user.cart.length === 0) {
+            return res.status(400).json({ message: "Cart is empty" });
+        }
 
-        const options = {
-            amount: Math.round(total * 100 * 83), // Converting to Paise (Assuming USD to INR conversion if using FakeStore)
-            currency: "INR",
-            receipt: `order_${Date.now()}`,
-        };
+        // 2. Map cart items to Stripe format
+        const line_items = user.cart.map((item) => ({
+            price_data: {
+                currency: 'usd', // Change to 'inr' if you prefer
+                product_data: {
+                    name: item.name,
+                    // images: [item.image], // Optional: add product images
+                },
+                unit_amount: Math.round(item.price * 100), // Stripe uses cents ($20.00 = 2000)
+            },
+            quantity: item.quantity,
+        }));
 
-        const order = await razorpay.orders.create(options);
-        res.status(200).json(order);
+        // 3. Create the Stripe Session
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: line_items,
+            mode: 'payment',
+            // Pass the Firebase UID in metadata so the Webhook knows who paid
+            metadata: { firebaseId: uid }, 
+            success_url: `${process.env.CLIENT_URL}/success`,
+            cancel_url: `${process.env.CLIENT_URL}/cart`,
+        });
+
+        // 4. Send the URL to the frontend
+        res.status(200).json({ url: session.url });
     } catch (err) {
-        res.status(500).send(err);
+        console.error("Stripe Error:", err);
+        res.status(500).json({ error: err.message });
     }
 });
 
