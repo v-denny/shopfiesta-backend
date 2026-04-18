@@ -9,21 +9,22 @@ router.post('/create-checkout-session', async (req, res) => {
 
     try {
         // 1. Get user and their cart from MongoDB
-        const user = await User.findOne({ firebaseId: uid });
+        const user = await User.findOne({ firebaseId: uid }).populate('cart.productId');
         
         if (!user || user.cart.length === 0) {
             return res.status(400).json({ message: "Cart is empty" });
         }
 
         // 2. Map cart items to Stripe format
+       const validCartItems = user.cart.filter(item => item.productId);
         const line_items = user.cart.map((item) => ({
             price_data: {
                 currency: 'usd', // Change to 'inr' if you prefer
                 product_data: {
-                    name: item.name,
+                    name: item.productId.name,
                     // images: [item.image], // Optional: add product images
                 },
-                unit_amount: Math.round(item.price * 100), // Stripe uses cents ($20.00 = 2000)
+                unit_amount: Math.round(item.productId.price * 100), // Stripe uses cents ($20.00 = 2000)
             },
             quantity: item.quantity,
         }));
