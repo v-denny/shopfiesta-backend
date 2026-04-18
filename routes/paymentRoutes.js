@@ -17,17 +17,21 @@ router.post('/create-checkout-session', async (req, res) => {
 
         // 2. Map cart items to Stripe format
        const validCartItems = user.cart.filter(item => item.productId);
-        const line_items = user.cart.map((item) => ({
-            price_data: {
-                currency: 'usd', // Change to 'inr' if you prefer
-                product_data: {
-                    name: item.productId.name,
-                    // images: [item.image], // Optional: add product images
+        const line_items = validCartItems.map((item) => {
+            const itemPrice = Number(item.productId.price) || 0; 
+
+            return {
+                price_data: {
+                    currency: 'usd', 
+                    product_data: {
+                        // FIX: Changed .name to .title to match your Product schema!
+                        name: item.productId.title || 'Festive Item', 
+                    },
+                    unit_amount: Math.round(itemPrice * 100), // Safely converted to cents
                 },
-                unit_amount: Math.round(item.productId.price * 100), // Stripe uses cents ($20.00 = 2000)
-            },
-            quantity: item.quantity,
-        }));
+                quantity: item.quantity,
+            };
+        });
 
         // 3. Create the Stripe Session
         const session = await stripe.checkout.sessions.create({
