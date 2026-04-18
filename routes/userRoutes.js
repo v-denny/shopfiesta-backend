@@ -11,10 +11,10 @@ router.post('/sync-user', async (req, res) => {
             { 
                 $set: { 
                     firebaseId: uid, // Update their Firebase ID in case it changed
-                    displayName: displayName 
+                    name: displayName 
                 } 
             },
-            { new: true, upsert: true } // upsert: true creates it if not found
+            { new: true, upsert: true, returnDocument: 'after' } // upsert: true creates it if not found
         );
         res.status(200).json(user);
     } catch (error) {

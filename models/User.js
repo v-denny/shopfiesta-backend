@@ -20,21 +20,25 @@ const userSchema = new mongoose.Schema({
         enum: ['user', 'admin'],
         default: 'user', // Most signups will be regular users
     },
-    wishlist: [{
+    wishlist: {
+      type:  [{
         type: String,
-        ref: 'Product' // This links to your Product model (we'll build that next!)
-    }],
+        ref: 'Product' ,
+        }], default: [] 
+    },
     createdAt: {
         type: Date,
         default: Date.now,
     },
-    cart: [{
-        productId: String, // Since you use external APIs for now, store the ID as a string
+    cart: {
+        type: [{
+        productId: String, // for external APIs store the ID as a string
         name: String,
         price: Number,
         image: String,
         quantity: { type: Number, default: 1 }
-    }],
+    }], default: []
+    }
 });
 
 module.exports = mongoose.model('User', userSchema);
