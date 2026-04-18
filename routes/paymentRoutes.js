@@ -49,7 +49,7 @@ router.post('/create-checkout-session', async (req, res) => {
             mode: 'payment',
             // Pass the Firebase UID in metadata so the Webhook knows who paid
             metadata: { firebaseId: uid }, 
-            success_url: `${safe_url}/success`,
+            success_url: `${safe_url}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${safe_url}/cart`,
         });
 
