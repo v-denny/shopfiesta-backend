@@ -5,7 +5,7 @@ const User = require('../models/User');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 router.post('/create-checkout-session', async (req, res) => {
-    const { uid } = req.body; // Firebase UID from frontend
+    const { uid, client_url } = req.body; // Firebase UID from frontend
 
     try {
         // 1. Get user and their cart from MongoDB
@@ -14,6 +14,15 @@ router.post('/create-checkout-session', async (req, res) => {
         if (!user || user.cart.length === 0) {
             return res.status(400).json({ message: "Cart is empty" });
         }
+        
+        const allowedDomains = [
+            'http://localhost:5173', 
+            process.env.CLIENT_URL // Your live Vercel/Netlify URL
+        ];
+        
+        const safe_url = allowedDomains.includes(client_url) 
+            ? client_url 
+            : process.env.CLIENT_URL;
 
         // 2. Map cart items to Stripe format
        const validCartItems = user.cart.filter(item => item.productId);
@@ -40,8 +49,8 @@ router.post('/create-checkout-session', async (req, res) => {
             mode: 'payment',
             // Pass the Firebase UID in metadata so the Webhook knows who paid
             metadata: { firebaseId: uid }, 
-            success_url: `${process.env.CLIENT_URL}/success`,
-            cancel_url: `${process.env.CLIENT_URL}/cart`,
+            success_url: `${safe_url}/success`,
+            cancel_url: `${safe_url}/cart`,
         });
 
         // 4. Send the URL to the frontend
