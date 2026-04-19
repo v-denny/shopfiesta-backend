@@ -11,7 +11,7 @@ router.post('/sync-user', async (req, res) => {
             { 
                 $set: { 
                     firebaseId: uid, // Update their Firebase ID in case it changed
-                    name: displayName 
+                    name: displayName || email.split('@')[0] || 'User' // Use displayName or fallback to email prefix
                 } 
             },
             { new: true, upsert: true, returnDocument: 'after' } // upsert: true creates it if not found
