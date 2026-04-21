@@ -37,7 +37,7 @@ router.post('/remove', async (req, res) => {
     try {
         const user = await User.findOne({ firebaseId: uid });
         // Filter out the item to delete it entirely
-        user.cart = user.cart.filter(item => item.productId !== productId);
+        user.cart = user.cart.filter(item => String(item.productId) !== productId);
         await user.save();
         res.status(200).json(user.cart);
     } catch (err) {
@@ -49,15 +49,20 @@ router.post('/remove', async (req, res) => {
 router.post('/increment', async (req, res) => {
     const { uid, productId } = req.body;
     try {
-        const user = await User.findOne({ firebaseId: uid });
-        if (!user) return res.status(404).json({ message: "User not found" });
+        const updatedUser = await User.findOneAndUpdate(
+            { firebaseId: uid, "cart.productId": productId }, 
+            { $inc: { "cart.$.quantity": 1 } },  
+            { new: true }                  
+        );
+        if (!updatedUser) return res.status(404).json({ message: "User or item not found" });
 
-        const itemIndex = user.cart.findIndex(p => p.productId === productId);
+        const itemIndex = updatedUser.cart.findIndex(p => p.productId === productId);
 
         if (itemIndex > -1) {
-            user.cart[itemIndex].quantity += 1;
-            await user.save();
-            res.status(200).json(user.cart);
+            updatedUser.cart[itemIndex].quantity += 1;
+            updatedUser.markModified('cart');
+            await updatedUser.save();
+            res.status(200).json(updatedUser.cart);
         } else {
             res.status(404).json({ message: "Item not found in cart" });
         }
@@ -70,8 +75,12 @@ router.post('/increment', async (req, res) => {
 router.post('/decrement', async (req, res) => {
     const { uid, productId } = req.body;
     try {
-        const user = await User.findOne({ firebaseId: uid });
-        if (!user) return res.status(404).json({ message: "User not found" });
+        const user = await User.findOneAndUpdate(
+    { firebaseId: uid, "cart.productId": productId, "cart.quantity": { $gt: 1 } },
+    { $inc: { "cart.$.quantity": -1 } },
+    { new: true }
+);
+        if (!user) return res.status(404).json({ message: "User or item not found" });
 
         const itemIndex = user.cart.findIndex(p => p.productId === productId);
 
