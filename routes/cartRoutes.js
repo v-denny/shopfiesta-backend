@@ -9,13 +9,16 @@ router.post('/add', async (req, res) => {
         const user = await User.findOne({ firebaseId: uid });
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        const itemIndex = user.cart.findIndex(p => p.productId === product.id);
+        const incomingProductIdStr = String(product._id || product.productId);
 
-        if (itemIndex > -1) {
-            user.cart[itemIndex].quantity += 1;
+        const existingItemIndex = user.cart.findIndex(
+            (item) => String(item.productId) === incomingProductIdStr
+        );
+        if (existingItemIndex > -1) {
+            user.cart[existingItemIndex].quantity += 1;
         } else {
             user.cart.push({ 
-                productId: product.id, 
+                productId: incomingProductIdStr, 
                 name: product.name, 
                 price: product.price, 
                 image: product.image, 
