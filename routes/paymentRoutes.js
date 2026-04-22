@@ -27,15 +27,20 @@ router.post('/create-checkout-session', async (req, res) => {
         // 2. Map cart items to Stripe format
        const validCartItems = user.cart.filter(item => item.productId);
         const line_items = validCartItems.map((item) => {
-            const itemPrice = Number(item.productId.price) || 0; 
+            const itemPrice = Number(item.productId.price) || Number(item.price) || 0; 
+            const itemName = item.productId.title || item.productId.name || item.name || 'Festive Item';
 
+            const itemImage = item.productId.image || item.image;
+            const product_data = {
+                name: itemName,
+            };
+            if (itemImage) {
+                product_data.images = [itemImage];
+            }
             return {
                 price_data: {
                     currency: 'usd', 
-                    product_data: {
-                        // FIX: Changed .name to .title to match your Product schema!
-                        name: item.productId.title || 'Festive Item', 
-                    },
+                    product_data: product_data,
                     unit_amount: Math.round(itemPrice * 100), // Safely converted to cents
                 },
                 quantity: item.quantity,
