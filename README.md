@@ -36,6 +36,6 @@ This repository contains the **server-side backend** for the ShopFiesta e-commer
     STRIPE_SECRET_KEY=your_stripe_test_secret_key
     STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
 
-# Ensure this points to your running frontend client: `CLIENT_URL=http://localhost:5173`
+**Ensure this points to your running frontend client:** `CLIENT_URL=http://localhost:5173`
 
 4. Start the server: `npm start` or `npm run dev` if using nodemon
